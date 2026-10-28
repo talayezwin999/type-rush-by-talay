@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TYPE RUSH — Typing Game</title>
+<style>
+:root {
+  --bg: #121212;
+  --panel: #1c1c1c;
+  --orange: #ff7628;
+  --soft: #ffaa70;
+  --text: #f5f5f5;
+  --muted: #858585;
+  --green: #8be6a0;
+  --red: #ff6565;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+}
+header, main, footer {
+  width: min(900px, 92%);
+  margin: auto;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px 0;
+  border-bottom: 1px solid #292929;
+}
+.logo { font-size: 24px; font-weight: 850; letter-spacing: -1px; }
+.logo span { color: var(--orange); }
+.tag { color: var(--muted); font-size: 12px; }
+main { padding: 45px 0 60px; }
+h1 { font-size: clamp(30px, 5vw, 48px); margin: 0 0 8px; }
+.subtitle { color: var(--muted); margin-bottom: 32px; }
+.label {
+  color: var(--muted); font-size: 12px;
+  letter-spacing: 1.5px; margin-bottom: 12px;
+}
+.options {
+  display: flex; gap: 9px; flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+button, select {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid #383838;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 11px 16px;
+  transition: .18s ease;
+}
+button:hover { border-color: var(--orange); }
+button.active {
+  background: var(--orange);
+  color: #17110d;
+  border-color: var(--orange);
+  font-weight: 750;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.stat {
+  padding: 18px; background: var(--panel);
+  border-radius: 14px; border: 1px solid #292929;
+}
+.stat small { color: var(--muted); display: block; }
+.stat strong { font-size: 30px; display: block; margin-top: 5px; }
+#timer { color: var(--orange); }
+.game {
+  background: var(--panel); border: 1px solid #303030;
+  border-radius: 16px; padding: 24px;
+}
+.game-top {
+  display: flex; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 18px;
+}
+#combo { color: var(--soft); font-weight: 700; }
+#words {
+  font-size: 21px; line-height: 2;
+  color: #777; min-height: 150px;
+  overflow-wrap: anywhere; white-space: pre-wrap;
+}
+#words span.correct { color: var(--green); }
+#words span.wrong {
+  color: var(--red);
+  background: #482525; border-radius: 3px;
+}
+#words span.current {
+  border-left: 2px solid var(--orange);
+  margin-left: -2px;
+}
+#entry {
+  width: 100%; margin-top: 18px; padding: 16px;
+  border-radius: 10px; border: 1px solid #454545;
+  background: #141414; color: white;
+  font: inherit; font-size: 18px; outline: none;
+}
+#entry:focus { border-color: var(--orange); }
+.actions { display: flex; gap: 10px; margin-top: 16px; }
+.primary {
+  background: var(--orange); color: #17110d;
+  border-color: var(--orange); font-weight: 750;
+}
+#message { color: var(--muted); margin-top: 18px; min-height: 24px; }
+footer {
+  color: var(--muted); text-align: center;
+  padding: 25px 0; font-size: 12px;
+}
+@media (max-width: 540px) {
+  main { padding-top: 30px; }
+  .stat { padding: 12px; }
+  .stat strong { font-size: 24px; }
+  .game { padding: 16px; }
+  #words { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">TYPE <span>RUSH.</span></div>
+  <div class="tag">THAI × ENGLISH</div>
+</header>
+
+<main>
+  <h1>Find your <span style="color:var(--orange)">flow.</span></h1>
+  <div class="subtitle">พิมพ์ให้ไว แม่นยำ แล้วทำลายสถิติของตัวเอง</div>
+
+  <div class="label">LANGUAGE</div>
+  <div class="options" id="languages">
+    <button class="active" data-value="th">ไทย</button>
+    <button data-value="en">English</button>
+    <button data-value="mix">Mixed</button>
+  </div>
+
+  <div class="label">DIFFICULTY</div>
+  <div class="options" id="difficulties">
+    <button class="active" data-value="easy">Easy</button>
+    <button data-value="medium">Medium</button>
+    <button data-value="hard">Hard</button>
+    <button data-value="veryhard">Very Hard</button>
+  </div>
+
+  <section class="stats">
+    <div class="stat"><small>TIME LEFT</small><strong id="timer">60</strong></div>
+    <div class="stat"><small>WPM</small><strong id="wpm">0</strong></div>
+    <div class="stat"><small>ACCURACY</small><strong id="accuracy">100%</strong></div>
+  </section>
+
+  <section class="game">
+    <div class="game-top">
+      <span class="label" style="margin:0">YOUR CHALLENGE</span>
+      <span id="combo">COMBO ×0</span>
+    </div>
+    <div id="words" aria-live="polite"></div>
+    <input id="entry" type="text" placeholder="กดเริ่มเกมก่อน..." autocomplete="off" disabled>
+    <div class="actions">
+      <button class="primary" id="start">เริ่มเกม →</button>
+      <button id="restart">เริ่มใหม่ ↻</button>
+    </div>
+    <div id="message">เลือกภาษาและระดับความยาก แล้วเริ่มเล่นได้เลย</div>
+  </section>
+</main>
+
+<footer>TYPE RUSH © 2026 · Practice makes progress.</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const banks = {
+  th: {
+    easy: ["แมวตัวนี้น่ารักมาก","วันนี้อากาศดี","ฉันชอบฟังเพลง","การฝึกฝนทำให้เก่งขึ้น","เรามาเริ่มกันเลย"],
+    medium: ["ความพยายามนำไปสู่ความสำเร็จ","อย่าหยุดเรียนรู้สิ่งใหม่","ทุกวินาทีมีความหมาย","พัฒนาตัวเองให้ดีขึ้นทุกวัน"],
+    hard: ["ความแม่นยำสำคัญกว่าความเร็วเพียงอย่างเดียว","จงตั้งเป้าหมายแล้วลงมือทำอย่างสม่ำเสมอ","ความผิดพลาดคือโอกาสในการเรียนรู้"],
+    veryhard: ["ความสำเร็จไม่ได้เกิดขึ้นในชั่วข้ามคืน แต่เกิดจากความพยายามอย่างต่อเนื่อง","ฝึกฝนทักษะของตนเอง พร้อมเรียนรู้จากทุกความท้าทาย"]
+  },
+  en: {
+    easy: ["the quick brown fox","practice makes progress","hello world","keep moving forward","you can do it"],
+    medium: ["Every day is a new opportunity.","Small steps create big changes.","Focus on progress, not perfection."],
+    hard: ["Accuracy matters just as much as typing speed.","Consistency is the secret to long-term improvement."],
+    veryhard: ["Great achievements are built through patience, practice, and consistent effort.","Challenge yourself to improve without sacrificing accuracy."]
+  }
+};
+
+const extra = ["2026","code_99","fast.dev","hello_world()","speed++","type-rush!"];
+
+let lang = "th", difficulty = "easy";
+let target = "", running = false, finished = false;
+let startAt = 0, timerId = null, combo = 0, bestCombo = 0;
+let typed = "", correct = 0, errors = 0, total = 0;
+
+function choose(group, callback) {
+  $(group).querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (running) return;
+      $(group).querySelectorAll("button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      callback(btn.dataset.value);
+      reset();
+    });
+  });
+}
+
+choose("languages", v => lang = v);
+choose("difficulties", v => difficulty = v);
+
+function makeText() {
+  let source = lang === "mix"
+    ? [...banks.th[difficulty], ...banks.en[difficulty]]
+    : banks[lang][difficulty];
+
+  let words = [];
+  for (let i = 0; i < 8; i++) {
+    words.push(source[Math.floor(Math.random() * source.length)]);
+  }
+  if (difficulty === "hard" || difficulty === "veryhard") {
+    words.push(extra[Math.floor(Math.random() * extra.length)]);
+  }
+  return words.join(" ");
+}
+
+function render() {
+  const area = $("words");
+  area.replaceChildren();
+  const chars = Array.from(target);
+  chars.forEach((ch, i) => {
+    const span = document.createElement("span");
+    span.textContent = ch;
+    if (i < typed.length) {
+      span.className = typed[i] === ch ? "correct" : "wrong";
+    } else if (i === typed.length && running) {
+      span.className = "current";
+    }
+    area.appendChild(span);
+  });
+}
+
+function reset() {
+  clearInterval(timerId);
+  running = false;
+  finished = false;
+  typed = ""; correct = 0; errors = 0; total = 0;
+  combo = 0; bestCombo = 0;
+  target = makeText();
+  $("timer").textContent = "60";
+  $("wpm").textContent = "0";
+  $("accuracy").textContent = "100%";
+  $("combo").textContent = "COMBO ×0";
+  $("entry").value = "";
+  $("entry").disabled = true;
+  $("entry").placeholder = "กดเริ่มเกมก่อน...";
+  $("start").textContent = "เริ่มเกม →";
+  $("message").textContent = "พร้อมแล้วหรือยัง?";
+  render();
+}
+
+function start() {
+  if (running) {
+    $("entry").focus();
+    return;
+  }
+  if (finished) reset();
+  running = true;
+  startAt = Date.now();
+  $("entry").disabled = false;
+  $("entry").placeholder = "เริ่มพิมพ์ที่นี่...";
+  $("entry").focus();
+  $("message").textContent = "ลุยเลย! พิมพ์ให้แม่นที่สุด";
+  $("start").textContent = "กำลังเล่น...";
+  timerId = setInterval(update, 100);
+}
+
+function update() {
+  if (!running) return;
+  const elapsed = (Date.now() - startAt) / 1000;
+  const left = Math.max(0, 60 - elapsed);
+  $("timer").textContent = Math.ceil(left);
+
+  const minutes = Math.max(elapsed / 60, 1 / 60);
+  $("wpm").textContent = Math.round(correct / 5 / minutes);
+  $("accuracy").textContent = (total ? Math.round(correct / total * 100) : 100) + "%";
+
+  if (left <= 0 || typed.length >= target.length) endGame();
+}
+
+function endGame() {
+  running = false;
+  finished = true;
+  clearInterval(timerId);
+  $("entry").disabled = true;
+  $("start").textContent = "เล่นอีกครั้ง →";
+  $("message").textContent =
+    `จบเกม! ความเร็ว ${$("wpm").textContent} WPM · ความแม่นยำ ${$("accuracy").textContent} · คอมโบสูงสุด ×${bestCombo}`;
+}
+
+$("entry").addEventListener("input", event => {
+  if (!running) return;
+  typed = event.target.value;
+  const chars = Array.from(target);
+  const inputChars = Array.from(typed);
+  correct = 0; errors = 0; total = inputChars.length;
+  combo = 0; bestCombo = 0;
+
+  inputChars.forEach((ch, i) => {
+    if (ch === chars[i]) {
+      correct++;
+      combo++;
+      bestCombo = Math.max(bestCombo, combo);
+    } else {
+      errors++;
+      combo = 0;
+    }
+  });
+
+  $("combo").textContent = "COMBO ×" + combo;
+  render();
+  update();
+});
+
+$("start").addEventListener("click", start);
+$("restart").addEventListener("click", reset);
+
+reset();
+</script>
+</body>
+</html>
